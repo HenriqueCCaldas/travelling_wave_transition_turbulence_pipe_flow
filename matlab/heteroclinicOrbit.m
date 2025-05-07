@@ -1,4 +1,4 @@
-function [t, X, Y] = heteroclinicOrbit(epsilon, b, p, s)
+function [t, X, Y] = heteroclinicOrbit(initalCond,plotFullSystem, fullSystem,plotSlowFlow,fullSlowFlow,vecFieldSlowFlow, epsilon, b, p, s)
 
     % Define initial conditions for the two equilibria
     % Trivial equilibrium
@@ -23,86 +23,130 @@ function [t, X, Y] = heteroclinicOrbit(epsilon, b, p, s)
 
     X2 = [0; 0; Aeq; Beq];
 
+
+    %Nontrivial and nonphysical  equilibrium
+
+    num3 = 4*b - 2*epsilon^2 - (2*b*epsilon^2)/p - 4*epsilon^3 - (2*b*epsilon^3)/p - ...
+           sqrt(-16*b*p*epsilon^2*(2*b-epsilon^2-epsilon^3)+(-4*b*p-2*b*epsilon^2 + 2*p*epsilon^2 - 2*b*epsilon^3)^2)/p; 
+    AeqV2 = num3/den1;
+
+    num4 = 4*b*p + 2*b*epsilon^2 - 2*p*epsilon^2 + 2*b*epsilon^3 + ...
+           sqrt(-16*b*p*epsilon^2*(2*b-epsilon^2-epsilon^3)+...
+           (-4*b*p-2*b*epsilon^2+2*p*epsilon^2 - 2*b*epsilon^3)^2);
+
+    BeqV2 = num4/den2;
+
+    X3 = [0; 0; AeqV2; BeqV2];
+
     % Initial time span for integration
     tspan = [0 3000];
+
     %Backward integration
     %tspan = [3000 0];
-    % Initial guess for the trajectory
-
     % Perturb the initial trivial equilibrium (choose wheter you want
-    % starting in trivial or nontrivial
-
-    %X0 = X1 + 0.01*[0.091226;0;0.99583; 0];
+    % starting in trivial or nontrivial by choosing X0 or X1
+    if(initalCond == "trivial")
+        %Testing for shifthing from unstable direction of the trivial equilibria
+        %for b = 0.04
+        X0 = X1 + 1 * [0.0487508;0;0.998811;0];
+        %Testing for shifting from stable direction of the trivial equilibria
+        %for b = 0.04
+        %X0 = X1 + 1 * [-0.898668;0;0.438629;0];
+    else
+        %Testing for shifting from unstable direction of the non-trivial equilibria
+        %for b = 0.04 this yields a chaotic atractor of the system. This
+        %presents an interesting chaotic effect. Most interesting effect for
+        %now, as well as to show that the whole system some how shows the whole
+        %dynamics
+        X0 = X2 + 0.01 * [-0.00277756;0.0126069;-0.000608936;0.991606];
     
-    %X0 = X1 + 0.01 * [0.091226 ; 0; 0.99583 ; 0];
+        %X0 =  X2 + 0.1*[-0.00277756; 0.0126069; -0.000608936 ; 0.991606];
+    end
 
-    X0 = X2 + 0.1 * [-0.00490214;0.0558524;-0.000371195;0.971917];
     Y0 = X0([2,3,4]);
-    
-    %X0 = X2 + 0.1*[-0.000895199 ; 0.824257 ; 0.0880286 ; 0.122488]; 
-    % Gives good results for a heteroclinic conncetion between the 2 equilibria 
-    
-    % Solve the system with the initial condition
-    [t, X] = ode15s(@(t, X) dynamicalSys(X, epsilon, b, p, s), tspan, X0);
-    [~, Y] = ode15s(@(t, Y) slowFlow(Y,epsilon,b,p,s),tspan, Y0);
-    
-%{ 
-Plot the trajectory in 2D (A vs B0)
-figure;
-%plot(X(:,3), X(:,4), 'b', 'LineWidth', 2);
-xlim([-1 1])
-ylim([0 10])
-hold on;
-plot(X1(3), X1(4), 'ro', 'MarkerSize', 10);
-plot(X2(3), X2(4), 'go', 'MarkerSize', 10);
-xlabel('A'); ylabel('B0');
-title('Heteroclinic Orbit Exploration');
-grid on;
-traj = animatedline('Color', 'b', 'LineWidth', 2);
-    for i = 1:length(t)
-        addpoints(traj, X(i,3), X(i,4));
-        drawnow;
-        pause(0.03); 
+    if(fullSystem == true)
+        % Solve the system with the initial condition for different setups
+        %Option 1:Normal full dynamical system
+        [t, X] = ode15s(@(t, X) dynamicalSys(X, epsilon, b, p, s), tspan, X0);
+    else
+        %Option 2:Cut dynamical system up to epsilon^2
+        [t, X] = ode15s(@(t, X) cutDynamicalSys(X, epsilon, b, p, s), tspan, X0);
     end
-legend('Trivial Equilibrium', 'Nontrivial Equilibrium','Trajectory');
-%}
-    %Plot the trajectory in 3D
-    figure;
-    
-    % Plot 3D trajectory
-    plot3(X(:,2), X(:,3), X(:,4), 'b', 'LineWidth', 2);
-    hold on;
-    plot3(Y(:,1), Y(:,2), Y(:,3), 'r', 'LineWidth', 2);
-    hold on;
-    traj1 = animatedline('Color', 'b', 'LineWidth', 2);
-    traj2 = animatedline('Color', 'r','LineWidth',2);
 
-    % Plot equilibrium points in 3D
-    plot3(X1(2), X1(3), X1(4), 'ro', 'MarkerSize', 10);
-    plot3(X2(2), X2(3), X2(4), 'go', 'MarkerSize', 10);
-    
-    % Set axis labels and title
-    xlim([-1 1])  % X-axis limits
-    ylim([0 1])  % Y-axis limits
-    zlim([0 10])  % Z-axis limits
-    xlabel('Psi0'); 
-    ylabel('A');
-    zlabel('B0');
-    title('Heteroclinic Orbit Exploration in 3D');
-
-    % Adjust view and grid
-    view(45, 30);  % Azimuth and elevation angles
-    grid on;
-    
-    %{
-    %Adding points to the trajetory
-    for i = 1:length(t)
-        %addpoints(traj1, X(i,2), X(i,3), X(i,4));
-        addpoints(traj2, Y(i,1), Y(i,2), Y(i,3));
-        drawnow;
-        pause(0.03);
+    if(fullSlowFlow == true)
+        %Option4: normal slow flow 
+        [tY, Y] = ode15s(@(tY, Y) slowFlow(Y, epsilon, b, p, s), tspan, Y0);
+    else
+        %Option 3: quasi slow flow flow with eps terms
+        [tY, Y] = ode15s(@(t, Y) quasiSlowFlow(Y, X0(1),t,epsilon,b,p,s),tspan,Y0);
     end
-    %}
-    % Add legend
-    legend('Trajectory', 'Trivial Equilibrium', 'Nontrivial Equilibrium');
+
+    % Sort time (fixes weird jumps)
+    [t, idx] = sort(t);
+    X = X(idx, :);
+    [tY, idy] = sort(tY);
+    Y = Y(idy, :);
+
+    % 3D Plot
+    fig = figure;
+    ax = axes('Parent', fig);
+    hold on;
+
+    plot3(ax,X1(2), X1(3), X1(4), 'ro', 'MarkerSize', 10); % Trivial
+    plot3(ax,X2(2), X2(3), X2(4), 'go', 'MarkerSize', 10); % Nontrivial
+    %plot3(ax,X3(2), X3(3), X3(4), 'mo', 'MarkerSize', 10); % Nonphysical
+    %limits of the plot
+    
+    xlim([-20, 20]);
+    ylim([-0.1, 1]);
+    zlim([0 40]);
+    xlabel('\phi_0','Interpreter','tex'); ylabel("A",'Interpreter','tex'); zlabel("B_0",'Interpreter','tex');
+    title('Phase Space for \psi_{0} , A and B_0 ','Interpreter','tex');
+    view(45, 30); grid on;
+
+    % Add trajectory points
+    N = min(length(t), size(X,1));
+    M = min(length(tY), size(Y,1));
+
+    %Uncomment for Slow flow vector field 
+    if (plotSlowFlow == true)
+        if (vecFieldSlowFlow == false)            
+            traj2 = animatedline('Color', 'b', 'LineWidth', 2);
+            hold on;
+            for i = 1:M
+            if any(isnan(Y(i,:))) || any(isinf(Y(i,:))), continue; end
+            addpoints(traj2, Y(i,1), Y(i,2), Y(i,3));
+            fprintf('Y at t = %.5f: [%.4f, %.4f, %.4f]\n', t(i), Y(i,1), Y(i,2), Y(i,3));
+            drawnow;
+            pause(0.001);
+            end
+        else
+            plotSlowFlowVectorField(epsilon,b,p,s,ax);
+        end
+    end
+    if (plotFullSystem == true)
+        traj1 = animatedline(ax,'Color', 'r', 'LineWidth', 2);
+        hold on;
+        for i = 1:N
+            if any(isnan(X(i,:))) || any(isinf(X(i,:))), continue; end
+            addpoints(traj1, X(i,2), X(i,3), X(i,4));
+            fprintf('X at t = %.5f: [%.4f, %.4f, %.4f]\n', t(i), X(i,2), X(i,3), X(i,4));
+            drawnow;
+            pause(0.0001);
+        end
+    end
+    if (plotSlowFlow == true)
+        if plotFullSystem == true
+            legend('Trivial Eq.','Nontrivial Eq. 1','Slow Flow','Trajectory');
+        else
+            legend('Trivial Eq.','Nontrivial Eq. 1','Slow Flow');
+        end
+    else
+        if plotFullSystem == true
+            legend('Trivial Eq.','Nontrivial Eq. 1','Trajectory');
+        else
+            legend('Trivial Eq.','Nontrivial Eq. 1');
+        end
+    end
+
 end
