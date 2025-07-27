@@ -1,4 +1,4 @@
-function dXdt = dynamicalSys(X, epsilon, b, p, s)
+function dXdt = dynSysFastTime(X, epsilon, b, p, s)
 % Extract variables
     phi = X(1);
     psi0 = X(2);
@@ -14,23 +14,22 @@ function dXdt = dynamicalSys(X, epsilon, b, p, s)
     denom =  -A * (b + epsilon + b * B0 * (p - epsilon) * epsilon + B0 * p * epsilon ^ 2) + ...
     epsilon * (-1 + b * B0 * epsilon) * (-1 + B0 * epsilon * (-p + epsilon));
 
-    
-    %Consider the extra epsilon that comes from the left hand side
-
-    dphidt = num_phi / (denom * epsilon);
+    dphidt = num_phi / (denom);
     
     % Define the second equation for d(psi0)/dt (fast variable equation)
     num_psi0 = A * B0 * (2 * p + 2 * B0 * p^2 * epsilon - epsilon^2) + 2 * b * B0 * (1 + B0 * (p - ...
         epsilon) * epsilon) * (- 1 + A + B0 * epsilon^2) + B0 * epsilon^2 * (1 + epsilon + ...
         B0 * epsilon * (p + (-1 + p) * epsilon)) + B0 * s * phi + s * (-1 + B0 * epsilon * (-p + epsilon)) * psi0;
 
-    dpsi0dt = num_psi0 / denom;
+    dpsi0dt = epsilon * num_psi0 / denom;
 
     % Define the rest of the slow equations
-    dAdt = phi;
-    dB0dt = psi0;
+    dAdt = epsilon * phi;
+    dB0dt = epsilon * psi0;
 
     % Return as a column vector
     dXdt = [dphidt; dpsi0dt; dAdt; dB0dt];
 
 end
+
+

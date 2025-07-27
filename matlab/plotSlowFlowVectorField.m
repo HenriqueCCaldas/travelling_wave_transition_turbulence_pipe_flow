@@ -35,15 +35,11 @@ function plotSlowFlowVectorField(epsilon, b, p, s, ax)
     dpsi0 = scaleFactor * dpsi0 ./ normFactor;
     dA = scaleFactor * dA ./ normFactor;
     dB0 = scaleFactor * dB0 ./ normFactor;
-    
-    % Compute angles for coloring
+
+    % create the color map and define the angls
     theta = atan2(dA, dpsi0);
-    
-    % Create colormap
     cmap = jet(256);
     
-    % Normalize theta to [0,1] for color mapping
-    % Making sure to handle edge cases properly
     if max(theta) == min(theta)
         % All angles are the same, use middle of colormap
         colorIndices = ones(size(theta)) * round(size(cmap, 1)/2);
@@ -55,14 +51,13 @@ function plotSlowFlowVectorField(epsilon, b, p, s, ax)
         % Ensure indices are within valid range
         colorIndices = max(1, min(size(cmap, 1), colorIndices));
     end
-    
-    % Check if ax is provided, otherwise create a new figure and axes
+
+    %verify is there is already an axis
     if nargin < 5 || isempty(ax)
         figure;
         ax = axes;
     end
     
-    % Set current axes and prepare to plot
     axes(ax);
     hold(ax, 'on');
     
@@ -83,12 +78,8 @@ function plotSlowFlowVectorField(epsilon, b, p, s, ax)
     ylabel('A', 'FontSize', 12);
     zlabel('B_0', 'FontSize', 12);
     title('Slow Flow Vector Field', 'FontSize', 14);
-    
-    % Set other plot properties
     grid(ax, 'on');
     view(ax, 45, 30);
-    
-    % Add a colorbar
     colormap(ax, cmap);
     c = colorbar(ax);
     c.Label.String = 'Direction Angle';
