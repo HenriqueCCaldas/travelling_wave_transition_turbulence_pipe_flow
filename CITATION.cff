@@ -1,0 +1,9 @@
+cff-version: 1.0.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: Colaço e Caldas
+  given-names: Henrique
+orcid: https://orcid.org/0000-0002-4824-0391
+title:HenriqueCCaldas/travelling_wave_transition_turbulence_pipe_flow: TravellingWavesInTransitionToTurbulence_MultiscaleDynamicsApproach
+version: v1.0.0
+date-released: 2025-07-28
