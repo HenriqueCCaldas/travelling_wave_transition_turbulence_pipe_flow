@@ -6,6 +6,6 @@ authors:
   orcid: "https://orcid.org/0000-0002-4824-0391"
 title: "travelling_wave_transition_turbulence_pipe_flow"
 version: 1.0.0
-doi: 10.5281/zenodo.1234
+doi: https://doi.org/10.5281/zenodo.16530383
 date-released: 2025-07-28
-url: "https://github.com/HenriqueCCaldas/travelling_wave_transition_turbulence_pipe_flow"
+url: "https://doi.org/10.5281/zenodo.16530383"
